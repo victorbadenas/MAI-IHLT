@@ -11,15 +11,16 @@ def load_csv_data(data_folder, train_test_split=False):
     return all_data
 
 
-def load_data(data_folder):
+def load_data(data_folder, train_test_split=False):
 
     assert isinstance(data_folder, str) or isinstance(data_folder, Path), f"data_foler must be a string or a Path variable"
     data_folder = Path(data_folder)
 
-    X_train, Y_train = load_csv_data(data_folder / "train")
-    X_test, Y_test = load_csv_data(data_folder / "test-gold")
+    train_data = load_csv_data(data_folder / "train", train_test_split=train_test_split)
+    test_data = load_csv_data(data_folder / "test-gold", train_test_split=train_test_split)
 
-    return X_train, Y_train, X_test, Y_test
+    return train_data, test_data
+
 
 
 def build_csv(data_folder):
