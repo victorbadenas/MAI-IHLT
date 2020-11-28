@@ -3,10 +3,12 @@ from pathlib import Path
 from utils import read_file
 
 
-def load_csv_data(data_folder):
+def load_csv_data(data_folder, train_test_split=False):
     all_data = pd.read_csv(data_folder / "all_sentences.tsv", sep='\t', index_col=0)
-    label_column = all_data.columns[-1]
-    return all_data.drop(label_column, axis=1), pd.DataFrame(all_data[label_column])
+    if train_test_split:
+        label_column = all_data.columns[-1]
+        return all_data.drop(label_column, axis=1), pd.DataFrame(all_data[label_column])
+    return all_data
 
 
 def load_data(data_folder):
