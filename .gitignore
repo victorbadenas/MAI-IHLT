@@ -132,3 +132,8 @@ dmypy.json
 .idea
 models
 dbg.py
+STSProject/data/test-gold/all_sentences.tsv
+
+STSProject/data/train/all_sentences.tsv
+
+STSProject/data/trial/all_sentences.tsv
