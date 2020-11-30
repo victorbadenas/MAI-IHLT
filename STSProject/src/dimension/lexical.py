@@ -75,8 +75,10 @@ def get_unique_words(seq):
 
 
 def get_ngrams(sentence1: list, sentence2: list, n: int):
-    return get_ngram(sentence1, n), get_ngram(sentence1, n)
+    return get_ngram(sentence1, n), get_ngram(sentence2, n)
 
 
 def get_ngram(sentence: list, n: int):
+    if len(sentence) < n:
+        return [tuple(sentence)]
     return list(nltk.ngrams(sentence, n))
