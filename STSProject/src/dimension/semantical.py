@@ -54,9 +54,9 @@ def get_nodes(parent):
     print(trees)
     return trees
 
-def generate_ngrams(sentence1: list, sentence2: list, n: int, unique=True):
-    return generate_ngram(sentence1, n, unique=unique), generate_ngram(sentence1, n, unique=unique)
+def get_ngrams(sentence1: list, sentence2: list, n: int, unique=True):
+    return get_ngram(sentence1, n, unique=unique), get_ngram(sentence1, n, unique=unique)
 
-def generate_ngram(sentence: list, n: int, unique=True):
+def get_ngram(sentence: list, n: int, unique=True):
     ngrams = zip(*[sentence[i:] for i in range(n)])
     return list(set(ngrams)) if unique else list(ngrams)
