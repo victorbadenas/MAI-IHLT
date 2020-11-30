@@ -82,7 +82,7 @@ def apply_ne(sentence: str):
             result.append(" ".join(word[0] for word in leaves))
         else:
             result.append(el[0])
-    print(result)
+    return result
 
 
 def get_unique_words(seq):
