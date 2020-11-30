@@ -1,10 +1,10 @@
 import nltk
 from nltk.corpus import stopwords
 from string import punctuation
-from nltk import pos_tag, ne_chunk
+from nltk import pos_tag
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet as wn
-from nltk.tree import Tree
+nltk.download('stopwords')
 nltk.download('averaged_perceptron_tagger')
 
 
@@ -69,23 +69,14 @@ def extract_lemma(word_and_tag):
     return word_and_tag[0]
 
 
-def get_named_entities(first_sentence: str, second_sentence: str):
-    return apply_ne(first_sentence), apply_ne(second_sentence)
-
-
-def apply_ne(sentence: str):
-    sentences_ne = list(ne_chunk(pos_tag(sentence), binary=True))
-    result = []
-    for el in sentences_ne:
-        if isinstance(el, Tree):
-            leaves = el.leaves()
-            result.append(" ".join(word[0] for word in leaves))
-        else:
-            result.append(el[0])
-    return result
-
-
 def get_unique_words(seq):
     seen = set()
-    seen_add = seen.add
-    return [x for x in seq if not (x in seen or seen_add(x))]
+    return [x for x in seq if not (x in seen or seen.add(x))]
+
+
+def get_ngrams(sentence1: list, sentence2: list, n: int):
+    return get_ngram(sentence1, n), get_ngram(sentence1, n)
+
+
+def get_ngram(sentence: list, n: int):
+    return list(nltk.ngrams(sentence, n))
