@@ -74,8 +74,20 @@ def get_unique_words(seq):
     return [x for x in seq if not (x in seen or seen.add(x))]
 
 
-def get_ngrams(sentence1: list, sentence2: list, n: int):
-    return get_ngram(sentence1, n), get_ngram(sentence2, n)
+def get_ngrams(sentence1: str, sentence2: str, n: int):
+    sentences1 = nltk.sent_tokenize(sentence1)
+    sentences2 = nltk.sent_tokenize(sentence2)
+    sentence1_ngrams = []
+    for s1 in sentences1:
+        tokenized_1 = nltk.word_tokenize(s1)
+        no_stopwords_1 = clean_sentence_from_stopword(tokenized_1)
+        sentence1_ngrams += get_ngram(no_stopwords_1, n)
+    sentence2_ngrams = []
+    for s2 in sentences2:
+        tokenized_2 = nltk.word_tokenize(s2)
+        no_stopwords_2 = clean_sentence_from_stopword(tokenized_2)
+        sentence2_ngrams += get_ngram(no_stopwords_2, n)
+    return sentence1_ngrams, sentence2_ngrams
 
 
 def get_ngram(sentence: list, n: int):
