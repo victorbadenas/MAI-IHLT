@@ -26,18 +26,22 @@ def get_tokenized_sentences_lowercase(first_sentence: str, second_sentence: str,
         return first_sentence_lc, second_sentence_lc
 
 
-def get_tokenized_without_stopwords(first_sentence: str, second_sentence: str, return_unique_words=False):
-    first_cleaned = clean_sentence_from_stopword(first_sentence)
-    second_cleaned = clean_sentence_from_stopword(second_sentence)
+def get_tokenized_without_stopwords(first_sentence: str, second_sentence: str, return_unique_words=False,
+                                    filter_and_return_in_lowercase=False):
+    first_cleaned = clean_sentence_from_stopword(first_sentence, filter_and_return_in_lowercase)
+    second_cleaned = clean_sentence_from_stopword(second_sentence, filter_and_return_in_lowercase)
     if return_unique_words:
         return get_unique_words(first_cleaned), get_unique_words(second_cleaned)
     else:
         return first_cleaned, second_cleaned
 
 
-def clean_sentence_from_stopword(sentence):
+def clean_sentence_from_stopword(sentence, filter_and_return_in_lowercase=False):
     stopwords_list = set(stopwords.words('english'))
-    cleaned_text = [word for word in sentence if (word not in stopwords_list and word not in punctuation)]
+    if filter_and_return_in_lowercase:
+        cleaned_text = [word.lower() for word in sentence if (word.lower() not in stopwords_list and word not in punctuation)]
+    else:
+        cleaned_text = [word for word in sentence if (word not in stopwords_list and word not in punctuation)]
     return cleaned_text
 
 
@@ -74,8 +78,20 @@ def get_unique_words(seq):
     return [x for x in seq if not (x in seen or seen.add(x))]
 
 
-def get_ngrams(sentence1: list, sentence2: list, n: int):
-    return get_ngram(sentence1, n), get_ngram(sentence2, n)
+def get_ngrams(sentence1: str, sentence2: str, n: int):
+    sentences1 = nltk.sent_tokenize(sentence1)
+    sentences2 = nltk.sent_tokenize(sentence2)
+    sentence1_ngrams = []
+    for s1 in sentences1:
+        tokenized_1 = nltk.word_tokenize(s1)
+        no_stopwords_1 = clean_sentence_from_stopword(tokenized_1, False)
+        sentence1_ngrams += get_ngram(no_stopwords_1, n)
+    sentence2_ngrams = []
+    for s2 in sentences2:
+        tokenized_2 = nltk.word_tokenize(s2)
+        no_stopwords_2 = clean_sentence_from_stopword(tokenized_2, False)
+        sentence2_ngrams += get_ngram(no_stopwords_2, n)
+    return sentence1_ngrams, sentence2_ngrams
 
 
 def get_ngram(sentence: list, n: int):
