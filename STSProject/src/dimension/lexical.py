@@ -17,19 +17,19 @@ def get_tokenized_sentences(first_sentence: str, second_sentence: str, return_un
         return first_tokenized, second_tokenized
 
 
-def get_tokenized_sentences_lowercase(first_sentence: str, second_sentence: str, return_unique_words=False):
-    first_sentence_lc = [word.lower() for word in first_sentence]
-    second_sentence_lc = [word.lower() for word in second_sentence]
+def get_tokenized_sentences_lowercase(tokens_first_sentence: str, tokens_second_sentence: str, return_unique_words=False):
+    first_sentence_lc = [word.lower() for word in tokens_first_sentence]
+    second_sentence_lc = [word.lower() for word in tokens_second_sentence]
     if return_unique_words:
         return get_unique_words(first_sentence_lc), get_unique_words(second_sentence_lc)
     else:
         return first_sentence_lc, second_sentence_lc
 
 
-def get_tokenized_without_stopwords(first_sentence: str, second_sentence: str, return_unique_words=False,
-                                    filter_and_return_in_lowercase=False):
-    first_cleaned = clean_sentence_from_stopword(first_sentence, filter_and_return_in_lowercase)
-    second_cleaned = clean_sentence_from_stopword(second_sentence, filter_and_return_in_lowercase)
+def filter_stopwords(tokens_first_sentence: str, tokens_second_sentence: str, return_unique_words=False,
+                     filter_and_return_in_lowercase=False):
+    first_cleaned = clean_sentence_from_stopword(tokens_first_sentence, filter_and_return_in_lowercase)
+    second_cleaned = clean_sentence_from_stopword(tokens_second_sentence, filter_and_return_in_lowercase)
     if return_unique_words:
         return get_unique_words(first_cleaned), get_unique_words(second_cleaned)
     else:
@@ -45,8 +45,8 @@ def clean_sentence_from_stopword(sentence, filter_and_return_in_lowercase=False)
     return cleaned_text
 
 
-def get_lemmas(first_sentence: str, second_sentence: str, return_unique_words=False):
-    first_tagged, second_tagged = pos_tagger(first_sentence, second_sentence)
+def get_lemmas(tokens_first_sentence: str, tokens_second_sentence: str, return_unique_words=False):
+    first_tagged, second_tagged = pos_tagger(tokens_first_sentence, tokens_second_sentence)
     first_lemmatized = [extract_lemma(pair) for pair in first_tagged]
     second_lemmatized = [extract_lemma(pair) for pair in second_tagged]
     if return_unique_words:
@@ -85,18 +85,20 @@ def get_ngrams_with_sent_tokenize(sentence1: str, sentence2: str, n: int):
     for s1 in sentences1:
         tokenized_1 = nltk.word_tokenize(s1)
         no_stopwords_1 = clean_sentence_from_stopword(tokenized_1, False)
-        sentence1_ngrams += get_ngram(no_stopwords_1, n)
+        sentence1_ngrams += apply_ngram(no_stopwords_1, n)
     sentence2_ngrams = []
     for s2 in sentences2:
         tokenized_2 = nltk.word_tokenize(s2)
         no_stopwords_2 = clean_sentence_from_stopword(tokenized_2, False)
-        sentence2_ngrams += get_ngram(no_stopwords_2, n)
+        sentence2_ngrams += apply_ngram(no_stopwords_2, n)
     return sentence1_ngrams, sentence2_ngrams
 
-def get_ngrams(sentence1: list, sentence2: list, n: int):
-    return get_ngram(sentence1, n), get_ngram(sentence2, n)
 
-def get_ngram(sentence: list, n: int):
+def get_ngrams(sentence1: list, sentence2: list, n: int):
+    return apply_ngram(sentence1, n), apply_ngram(sentence2, n)
+
+
+def apply_ngram(sentence: list, n: int):
     if len(sentence) < n:
         return [tuple(sentence)]
     return list(nltk.ngrams(sentence, n))
