@@ -89,9 +89,9 @@ def get_features(df: pd.DataFrame):
             tokenized_1, tokenized_2, return_unique_words=False)
 
         # Get words without stopwords
-        no_stopwords_1, no_stopwords_2 = get_tokenized_without_stopwords(
+        no_stopwords_1, no_stopwords_2 = filter_stopwords(
             tokenized_1, tokenized_2, return_unique_words=False)
-        no_stopwords_lc_1, no_stopwords_lc_2 = get_tokenized_without_stopwords(
+        no_stopwords_lc_1, no_stopwords_lc_2 = filter_stopwords(
             tokenized_lc_1, tokenized_lc_2, return_unique_words=False)
 
         # Lemmas
