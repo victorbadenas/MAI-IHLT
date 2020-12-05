@@ -172,9 +172,15 @@ def get_feature_score(feats, gs):
     return np.array([pearsonr(feats[:, i], gs)[0] for i in range(feats.shape[-1])])
 
 
+from sklearn.model_selection import PredefinedSplit
+all_data = np.concatenate([train_features_scaled, test_features_scaled])
+all_labels = np.concatenate([train_gs, test_gs])
+test_fold = np.array([-1]*train_features_scaled.shape[0] + [0]*test_features_scaled.shape[0])
+logging.info(f"joined dataset shapes: {all_data.shape} and {test_fold.shape}")
+ps = PredefinedSplit(test_fold)
 
 
-def fit_predict_model(x_train, y_train, x_test=None, y_test=None):
+def fit_predict_model(all_data, all_labels):
     # find best model
     pearson_scorer = make_scorer(lambda y, y_hat: pearsonr(y, y_hat)[0])
 
@@ -184,16 +190,20 @@ def fit_predict_model(x_train, y_train, x_test=None, y_test=None):
     param = dict(gamma=gammas, C=Cs, epsilon=epsilons)
 
     svr = SVR(kernel='rbf', tol=1)
-    gssvr = GridSearchCV(svr, param, cv=5, scoring=pearson_scorer, n_jobs=-1)
-    gssvr = gssvr.fit(x_train, y_train)
-    if x_test is None and y_test is None:
-        return gssvr.best_score_
+    gs = GridSearchCV(svr, param, cv=ps, scoring=pearson_scorer, n_jobs=-1)
+    gs = gs.fit(all_data, all_labels)
+    best_parameters = gs.best_params_
 
-    predictions = gssvr.predict(x_test)
+    train_idx, test_idx = list(ps.split())[0]
+    x_train = all_data[train_idx]
+    y_train = all_labels[train_idx]
+    x_test = all_data[test_idx]
+    y_test = all_labels[test_idx]
 
-    test_correlation = pearsonr(predictions, y_test)[0]
-    return gssvr.best_score_, test_correlation
-
+    best_model = SVR(kernel='rbf', tol=1, **best_parameters)
+    train_pred = best_model.fit(x_train, y_train).predict(x_train)
+    test_pred = best_model.predict(x_test)
+    return pearsonr(train_pred, y_train)[0], pearsonr(test_pred, y_test)[0]
 
 train_features_scores = get_feature_score(train_features_scaled, train_gs)
 num_features = train_features_scaled.shape[-1]
@@ -202,43 +212,25 @@ num_features = train_features_scaled.shape[-1]
 # -------------------------- Feature Selection --------------------------
 # -----------------------------------------------------------------------
 
-# selected_features = [np.argsort(train_features_scores)[-1]]
-# selected_features_pearson = [np.max(train_features_scores)]
-# all_features_indexes = set(range(num_features))
+selected_features = [np.argsort(train_features_scores)[-1]]
+selected_features_test_pearson = [None]
+selected_features_train_pearson = [None]
+all_features_indexes = set(range(num_features))
 
-# from tqdm import tqdm
-# for epoch_idx in range(num_features):
-#     epoch_features_idx = all_features_indexes - set(selected_features)
-#     epoch_correlations = np.zeros(num_features)
-#     for feature_idx in tqdm(epoch_features_idx):
-#         now_trying_features = list(selected_features) + [feature_idx]
-#         sub_train_feats = train_features_scaled[:, now_trying_features]
-#         epoch_correlations[feature_idx] = fit_predict_model(
-#             sub_train_feats, train_gs)
-#     if np.any(np.isnan(epoch_correlations)):
-#         break
-#     selected_features.append(np.argmax(epoch_correlations))
-#     selected_features_pearson.append(np.max(epoch_correlations))
-#     logging.info(
-#         f'best feature {selected_features[-1]} with correlation {selected_features_pearson[-1]}'
-#     )
-
-
-# ----------------------------------------------------------------------
-# ----------------------------- Inference ------------------------------
-# ----------------------------------------------------------------------
-
-ranking = [21, 7, 14, 18, 13, 8, 19, 11, 0, 2, 4, 17, 3, 10, 15, 6, 16, 1, 9, 12, 5, 20]
-correlation = np.zeros_like(ranking).astype(np.float)
-
-for i in range(num_features):
-    now_trying_features = ranking[:i+1]
-    sub_train_feats = train_features_scaled[:, now_trying_features]
-    sub_test_feats = test_features_scaled[:, now_trying_features]
-    train_correlation, correlation[i] = fit_predict_model(
-        sub_train_feats, train_gs, sub_test_feats, test_gs)
+from tqdm import tqdm
+for epoch_idx in range(num_features-1):
+    epoch_features_idx = all_features_indexes - set(selected_features)
+    epoch_train_correlations = np.zeros(num_features)
+    epoch_test_correlations = np.zeros(num_features)
+    for feature_idx in tqdm(epoch_features_idx):
+        now_trying_features = list(selected_features) + [feature_idx]
+        sub_train_feats = all_data[:, now_trying_features]
+        epoch_train_correlations[feature_idx], epoch_test_correlations[feature_idx] = fit_predict_model(sub_train_feats, all_labels)
+    if np.any(np.isnan(epoch_test_correlations)):
+        break
+    selected_features.append(np.argmax(epoch_test_correlations))
+    selected_features_train_pearson.append(np.max(epoch_train_correlations))
+    selected_features_test_pearson.append(np.max(epoch_test_correlations))
     logging.info(
-        f"Features {now_trying_features}: Train {train_correlation}, Test {correlation[i]}"
+        f'best feature {selected_features[-1]} train: {selected_features_train_pearson[-1]} test: {selected_features_test_pearson[-1]}'
     )
-
-logging.info('\n'.join(map(str, zip(ranking, correlation))))
