@@ -4,7 +4,6 @@ from string import punctuation
 from nltk import pos_tag
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet as wn
-from nltk.wsd import lesk
 from nltk.stem.porter import *
 
 nltk.download('stopwords')
@@ -105,28 +104,6 @@ def apply_ngram(sentence: list, n: int):
     if len(sentence) < n:
         return [tuple(sentence)]
     return list(nltk.ngrams(sentence, n))
-
-
-def get_lesk_sentences(first_sentence: str, second_sentence: str):
-    return apply_lesk(first_sentence), apply_lesk(second_sentence)
-
-
-def apply_lesk(sentence):
-    sentence_tagged = pos_tag(sentence)
-    resulting_sentence = []
-    for word, tag in sentence_tagged:
-        if tag.startswith('N') and (type(lesk(sentence, word, wn.NOUN)) != type(None)):
-            resulting_sentence.append(lesk(sentence, word, wn.NOUN).name())
-        elif tag.startswith('V') and (type(lesk(sentence, word, wn.VERB)) != type(None)):
-            resulting_sentence.append(lesk(sentence, word, wn.VERB).name())
-        elif tag.startswith('J') and (type(lesk(sentence, word, wn.ADJ)) != type(None)):
-            resulting_sentence.append(lesk(sentence, word, wn.ADJ).name())
-        elif tag.startswith('R') and (type(lesk(sentence, word, wn.ADV)) != type(None)):
-            resulting_sentence.append(lesk(sentence, word, wn.ADV).name())
-        else:
-            resulting_sentence.append(word)
-    return resulting_sentence
-
 
 def get_stemmed_sentences(first_sentence: str, second_sentence: str):
     stemmer = PorterStemmer()
