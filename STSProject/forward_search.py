@@ -104,20 +104,52 @@ def get_features(df: pd.DataFrame):
         # Name entities
         sentence_ne_1, sentence_ne_2 = get_named_entities(
             tokenized_1, tokenized_2)
-
-        # Bigrams
-        bigrams_1, bigrams_2 = get_ngrams(no_stopwords_1, no_stopwords_2, n=2)
-        trigrams_1, trigrams_2 = get_ngrams(no_stopwords_1,
-                                            no_stopwords_2,
-                                            n=3)
-
+        
+        #lemmas cleaned from stopwords
         stopwords_and_lemmas1, stopwords_and_lemmas2 = get_lemmas(
             no_stopwords_1, no_stopwords_2, return_unique_words=False)
 
         stopwords_and_lemmas_lc_1, stopwords_and_lemmas_lc_2 = get_lemmas(
             no_stopwords_lc_1, no_stopwords_lc_2, return_unique_words=False)
+        
+        # Name entities without stopwords in lowercase
+        ne_no_stopwords_1, ne_no_stopwords_2 = filter_stopwords(
+            sentence_ne_1, sentence_ne_2, return_unique_words=False, filter_and_return_in_lowercase=True)
+        
+        # Name entities without stopwords in lowercase and lemmas
+        ne_no_stopwords_lemmas_1, ne_no_stopwords_lemmas_2 = get_lemmas( ne_no_stopwords_1, ne_no_stopwords_2, 
+                                                                        return_unique_words=False)
 
-        # Features
+        # Bigrams
+        bigrams_1, bigrams_2 = get_ngrams(no_stopwords_1, no_stopwords_2, n=2)
+        trigrams_1, trigrams_2 = get_ngrams(no_stopwords_1, no_stopwords_2, n=3)
+        
+        # Bigrams trigrams with sentence tokenizer 
+        bigrams_sent_1, bigrams_sent_2 = get_ngrams_with_sent_tokenize(sentence1, sentence2, n=2)
+        trigrams_sent_1, trigrams_sent_2 = get_ngrams_with_sent_tokenize(sentence1, sentence2, n=3)
+        
+        # Lesk
+        lesk_1, lesk_2 = get_lesk_sentences(tokenized_1, tokenized_2)
+        lesk_lc_1, lesk_lc_2 = get_lesk_sentences(tokenized_lc_1, tokenized_lc_2)
+
+
+        # Stemmer
+        stemmed_1, stemmed_2 = get_stemmed_sentences(sentence1, sentence2)
+        
+        
+        # Synset
+        average_path = get_synset_similarity(tokenized_1, tokenized_2, "path")
+        average_lch = get_synset_similarity(tokenized_1, tokenized_2, "lch")
+        average_wup = get_synset_similarity(tokenized_1, tokenized_2, "wup")
+        average_lin = get_synset_similarity(tokenized_1, tokenized_2, "lin")
+        
+        average_lc_path = get_synset_similarity(tokenized_lc_1, tokenized_lc_2, "path")
+        average_lc_lch = get_synset_similarity(tokenized_lc_1, tokenized_lc_2, "lch")
+        average_lc_wup = get_synset_similarity(tokenized_lc_1, tokenized_lc_2, "wup")
+        average_lc_lin = get_synset_similarity(tokenized_lc_1, tokenized_lc_2, "lin")
+        
+        
+        # ALL Features
         features[index] = [
             jaccard_similarity(tokenized_1, tokenized_2),
             jaccard_similarity(tokenized_lc_1, tokenized_lc_2),
@@ -126,10 +158,16 @@ def get_features(df: pd.DataFrame):
             jaccard_similarity(lemmatized_1, lemmatized_2),
             jaccard_similarity(lemmatized_lc_1, lemmatized_lc_2),
             jaccard_similarity(sentence_ne_1, sentence_ne_2),
-            jaccard_similarity(bigrams_1, bigrams_2),
-            jaccard_similarity(trigrams_1, trigrams_2),
             jaccard_similarity(stopwords_and_lemmas1, stopwords_and_lemmas2),
             jaccard_similarity(stopwords_and_lemmas_lc_1, stopwords_and_lemmas_lc_2),
+            jaccard_similarity(bigrams_1, bigrams_2),
+            jaccard_similarity(trigrams_1, trigrams_2),
+            jaccard_similarity(bigrams_sent_1, bigrams_sent_2),
+            jaccard_similarity(trigrams_sent_1, trigrams_sent_2),
+            jaccard_similarity(lesk_1, lesk_2),
+            jaccard_similarity(lesk_lc_1, lesk_lc_2),
+            jaccard_similarity(stemmed_1, stemmed_2),
+            
             dice_similarity(tokenized_1, tokenized_2),
             dice_similarity(tokenized_lc_1, tokenized_lc_2),
             dice_similarity(no_stopwords_1, no_stopwords_2),
@@ -137,14 +175,26 @@ def get_features(df: pd.DataFrame):
             dice_similarity(lemmatized_1, lemmatized_2),
             dice_similarity(lemmatized_lc_1, lemmatized_lc_2),
             dice_similarity(sentence_ne_1, sentence_ne_2),
-            dice_similarity(bigrams_1, bigrams_2),
-            dice_similarity(trigrams_1, trigrams_2),
             dice_similarity(stopwords_and_lemmas1, stopwords_and_lemmas2),
             dice_similarity(stopwords_and_lemmas_lc_1, stopwords_and_lemmas_lc_2),
+            dice_similarity(bigrams_1, bigrams_2),
+            dice_similarity(trigrams_1, trigrams_2),
+            dice_similarity(bigrams_sent_1, bigrams_sent_2),
+            dice_similarity(trigrams_sent_1, trigrams_sent_2),
+            dice_similarity(lesk_1, lesk_2),
+            dice_similarity(lesk_lc_1, lesk_lc_2),
+            dice_similarity(stemmed_1, stemmed_2),
+            
+            average_path,
+            average_lch,
+            average_wup,
+            average_lin,
+            average_lc_path,
+            average_lc_lch,
+            average_lc_wup,
+            average_lc_lin
         ]
     return np.array(features)
-
-
 
 
 train_features = get_features(train_data)
@@ -152,20 +202,17 @@ train_gs = train_data['Gs'].to_numpy()
 logging.info(f"train_features.shape: {train_features.shape}")
 logging.info(f"train_gs.shape: {train_gs.shape}")
 
+
 test_features = get_features(test_data)
 test_gs = test_data['Gs'].to_numpy()
 logging.info(f"test_features.shape: {test_features.shape}")
 logging.info(f"test_gs.shape: {test_gs.shape}")
 
 
-
-
 scaler = StandardScaler()
 scaler.fit(train_features)
 train_features_scaled = scaler.transform(train_features)
 test_features_scaled = scaler.transform(test_features)
-
-
 
 
 def get_feature_score(feats, gs):
@@ -206,6 +253,7 @@ def fit_predict_model(all_data, all_labels):
     return pearsonr(train_pred, y_train)[0], pearsonr(test_pred, y_test)[0]
 
 train_features_scores = get_feature_score(train_features_scaled, train_gs)
+logging.info(f"features correlation scores: {train_features_scores}")
 num_features = train_features_scaled.shape[-1]
 
 # -----------------------------------------------------------------------
