@@ -7,6 +7,7 @@ from itertools import product
 from dimension import lexical
 from dimension.lexical import filter_stopwords
 from nltk.corpus import wordnet_ic
+nltk.download('wordnet_ic')
 brown_ic = wordnet_ic.ic('ic-brown.dat')
 
 
