@@ -167,7 +167,9 @@ def get_features(df: pd.DataFrame):
             jaccard_similarity(lesk_1, lesk_2),
             jaccard_similarity(lesk_lc_1, lesk_lc_2),
             jaccard_similarity(stemmed_1, stemmed_2),
-            
+            jaccard_similarity(ne_no_stopwords_1, ne_no_stopwords_2),
+            jaccard_similarity(ne_no_stopwords_lemmas_1, ne_no_stopwords_lemmas_2),
+
             dice_similarity(tokenized_1, tokenized_2),
             dice_similarity(tokenized_lc_1, tokenized_lc_2),
             dice_similarity(no_stopwords_1, no_stopwords_2),
@@ -184,7 +186,9 @@ def get_features(df: pd.DataFrame):
             dice_similarity(lesk_1, lesk_2),
             dice_similarity(lesk_lc_1, lesk_lc_2),
             dice_similarity(stemmed_1, stemmed_2),
-            
+            dice_similarity(ne_no_stopwords_1, ne_no_stopwords_2),
+            dice_similarity(ne_no_stopwords_lemmas_1, ne_no_stopwords_lemmas_2),
+
             average_path,
             average_lch,
             average_wup,
@@ -232,7 +236,7 @@ def fit_predict_model(all_data, all_labels):
     pearson_scorer = make_scorer(lambda y, y_hat: pearsonr(y, y_hat)[0])
 
     gammas = np.logspace(-6, -1, 6)
-    Cs = np.array([0.5, 1, 2, 4, 8, 10, 15, 20, 50, 100, 200, 375, 500, 1000])
+    Cs = np.array([0.5, 1, 2, 4, 8, 10, 20, 50])
     epsilons = np.linspace(0.1, 1, 10)
     param = dict(gamma=gammas, C=Cs, epsilon=epsilons)
 
@@ -260,19 +264,20 @@ num_features = train_features_scaled.shape[-1]
 # -------------------------- Feature Selection --------------------------
 # -----------------------------------------------------------------------
 
-selected_features = [np.argsort(train_features_scores)[-1]]
-selected_features_test_pearson = [None]
-selected_features_train_pearson = [None]
+selected_features = [8, 27, 21, 33, 2, 42, 43, 37, 24, 28]
+selected_features_test_pearson = [0.6180479058137143, 0.6684258128720711, 0.6887985898725953, 0.7017885567526895, 0.7180065043510968, 0.7239247550859916, 0.7334796382489648, 0.7408532262421879, 0.7469733291412222, 0.745102971453478]
+selected_features_train_pearson = [0.6842395608682004, 0.7529825516276638, 0.7916448188467974, 0.8059964300167103, 0.8363786916664732, 0.8340439985420355, 0.8499751912959851, 0.850470035119627, 0.8558070618508399, 0.8518210627996919]
 all_features_indexes = set(range(num_features))
 
 from tqdm import tqdm
-for epoch_idx in range(num_features-1):
+for epoch_idx in range(num_features - len(selected_features)):
     epoch_features_idx = all_features_indexes - set(selected_features)
     epoch_train_correlations = np.zeros(num_features)
     epoch_test_correlations = np.zeros(num_features)
     for feature_idx in tqdm(epoch_features_idx):
         now_trying_features = list(selected_features) + [feature_idx]
         sub_train_feats = all_data[:, now_trying_features]
+        logging.debug(f'Trying {now_trying_features} features')
         epoch_train_correlations[feature_idx], epoch_test_correlations[feature_idx] = fit_predict_model(sub_train_feats, all_labels)
     if np.any(np.isnan(epoch_test_correlations)):
         break
@@ -282,3 +287,7 @@ for epoch_idx in range(num_features-1):
     logging.info(
         f'best feature {selected_features[-1]} train: {selected_features_train_pearson[-1]} test: {selected_features_test_pearson[-1]}'
     )
+
+logging.info("Result:")
+for idx, train, test in zip(selected_features, selected_features_test_pearson, selected_features_train_pearson):
+    logging.info(f"Feature {idx}: train pearson = {train}, test pearson = {test}")
